@@ -1,7 +1,16 @@
-import { useQuery } from "@tanstack/react-query"
-import { getAnecdotes } from "./requests"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { getAnecdotes, createAnecdote } from "./requests"
 
 const App = () => {
+
+  const client = useQueryClient()
+
+  const newAnecdoteMutation = useMutation(createAnecdote, {
+    onSuccess: (newAnecdote) => {
+      const anecdotes = client.getQueryData(["anecdotes"])
+      client.setQueryData(["anecdotes"], anecdotes.concat(newAnecdote))
+    }
+  })
 
   const result = useQuery({
     queryKey: ["anecdotes"],
@@ -9,20 +18,29 @@ const App = () => {
     retry: false,
   })
 
-  console.log(result)
-
   if (result.isLoading) {
     return <span>Loading...</span>
   }
 
   if (result.isError) {
-    return <span>Error: {result.error.message}</span>
+    return <span>anecdote service not available due to problems in server</span>
   }
 
   const anecdotes = result.data
 
+  const onSubmit = (e) => {
+    e.preventDefault()
+    const content = e.target.content.value
+    e.target.content.value = ""
+    newAnecdoteMutation.mutate({ content, votes: 0 })
+  }
+
   return (
     <div>
+      <form onSubmit={onSubmit}>
+        <input type="text" name="content" />
+        <button type="submit">add</button>
+      </form>
       {anecdotes.map(a => (
         <div key={a.id}>
           {`${a.content} has ${a.votes} `}
