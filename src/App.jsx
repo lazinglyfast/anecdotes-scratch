@@ -32,6 +32,10 @@ const App = () => {
       client.setQueryData(["anecdotes"], anecdotes.concat(newAnecdote))
       const payload = `created anecdote ${newAnecdote.content}`
       notify(dispatchNotification, payload)
+    },
+    onError: (error) => {
+      const payload = error.response.data.error
+      notify(dispatchNotification, payload)
     }
   })
 
