@@ -1,7 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getAnecdotes, createAnecdote, updateAnecdote } from "./requests"
+import { useNotificationValue, useNotificationDispatch, notify } from "./NotificationContext"
+
+const Notification = () => {
+  const notification = useNotificationValue()
+  if (!notification) {
+    return
+  }
+
+  const style = {
+    border: "solid",
+    padding: 10,
+    borderWidth: 1,
+  }
+
+  return (
+    <div style={style}>
+      {notification}
+    </div>
+  )
+}
 
 const App = () => {
+  const dispatchNotification = useNotificationDispatch()
 
   const client = useQueryClient()
 
@@ -9,6 +30,8 @@ const App = () => {
     onSuccess: (newAnecdote) => {
       const anecdotes = client.getQueryData(["anecdotes"])
       client.setQueryData(["anecdotes"], anecdotes.concat(newAnecdote))
+      const payload = `created anecdote ${newAnecdote.content}`
+      notify(dispatchNotification, payload)
     }
   })
 
@@ -18,6 +41,8 @@ const App = () => {
         .getQueryData(["anecdotes"])
         .map(a => a.id === updatedAnecdote.id ? updatedAnecdote : a)
       client.setQueryData(["anecdotes"], anecdotes)
+      const payload = `voted for anecdote ${updatedAnecdote.content}`
+      notify(dispatchNotification, payload)
     }
   })
 
@@ -50,6 +75,7 @@ const App = () => {
 
   return (
     <div>
+      <Notification />
       <form onSubmit={onSubmit}>
         <input type="text" name="content" />
         <button type="submit">add</button>
